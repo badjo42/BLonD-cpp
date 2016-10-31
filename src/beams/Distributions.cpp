@@ -270,7 +270,6 @@ void matched_from_line_density(Beams *beam,
                                  + (induced_voltage_length - 1) * line_den_resolution,
                                  induced_voltage_length);
         }
-        // cout << "ok 253\n";
 
 
     }
@@ -280,7 +279,6 @@ void matched_from_line_density(Beams *beam,
     cout << "time_induced_voltage: "
          << accumulate(time_induced_voltage.begin(), time_induced_voltage.end(), 0.)
          << "\n";
-    // line 185 distribution.py
 
 }
 
