@@ -153,11 +153,11 @@ f_vector_t InducedVoltageTime::induced_voltage_generation(Beams *beam,
         exit(-1);
     }
 
-    inducedVoltage.resize((uint)fSlices->n_slices);
     fInducedVoltage = inducedVoltage;
+    fInducedVoltage.resize((uint)fSlices->n_slices);
 
     if (length > 0)
-        inducedVoltage.resize(std::min((uint)fSlices->n_slices, length), 0);
+        inducedVoltage.resize(length, 0);
 
     return inducedVoltage;
 }
@@ -490,6 +490,7 @@ f_vector_t TotalInducedVoltage::induced_voltage_sum(Beams *beam, uint length)
         std::transform(tempIndVolt.begin(), tempIndVolt.end(),
                        v->fInducedVoltage.begin(), tempIndVolt.begin(),
                        std::plus<double>());
+        // std::cout << "extIndVolt: " << extIndVolt.size() << "\n";
     }
 
     fInducedVoltage = tempIndVolt;

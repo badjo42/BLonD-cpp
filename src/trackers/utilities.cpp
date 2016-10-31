@@ -240,8 +240,8 @@ void potential_well_cut(f_vector_t &theta_coord_array,
 
     int n_minima = min_theta_positions.size();
     int n_maxima = max_theta_positions.size();
-    cout << "minima: " << n_minima << "\n";
-    cout << "maxima: " << n_maxima << "\n";
+    // cout << "minima: " << n_minima << "\n";
+    // cout << "maxima: " << n_maxima << "\n";
     if (n_minima == 0) { // tested
         cerr << "[potential_well_cut] The potential well has no minima...\n";
         exit(-1);

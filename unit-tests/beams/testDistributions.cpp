@@ -408,12 +408,126 @@ TEST(testHelpers, distribution_density_function4)
 //     delete fullRing;
 // }
 
-TEST_F(testDistributions, matched_from_line_density1)
+// TEST_F(testDistributions, matched_from_line_density1)
+// {
+//     auto RfP = Context::RfP;
+//     auto beam = Context::Beam;
+//     auto epsilon = 1e-8;
+//     auto params = string(TEST_FILES "/Distributions/line_density1/");
+
+//     auto long_tracker = new RingAndRfSection(RfP);
+//     vector<RingAndRfSection *> trackerList{long_tracker};
+//     auto fullRing = new FullRingAndRf(trackerList);
+
+//     map<string, string> line_density_opt;
+//     line_density_opt["type"] = "gaussian";
+//     line_density_opt["bunch_length"] = "200e-9";
+//     line_density_opt["density_variable"] = "density_from_J";
+
+//     matched_from_line_density(beam, fullRing, line_density_opt);
+
+//     f_vector_t v;
+//     util::read_vector_from_file(v, params + "dt.txt");
+
+//     ASSERT_EQ(v.size(), beam->dt.size());
+//     for (uint i = 0; i < v.size(); ++i) {
+//         auto ref = v[i];
+//         auto real = beam->dt[i];
+//         ASSERT_NEAR(ref, real, epsilon * max(abs(ref), abs(real)))
+//                 << "Testing of beam->dt failed on i " << i << endl;
+//     }
+
+//     util::read_vector_from_file(v, params + "dE.txt");
+
+//     ASSERT_EQ(v.size(), beam->dE.size());
+//     for (uint i = 0; i < v.size(); ++i) {
+//         auto ref = v[i];
+//         auto real = beam->dE[i];
+//         ASSERT_NEAR(ref, real, epsilon * max(abs(ref), abs(real)))
+//                 << "Testing of beam->dE failed on i " << i << endl;
+//     }
+
+//     delete long_tracker;
+//     delete fullRing;
+// }
+
+
+// TEST_F(testDistributions, matched_from_line_density2)
+// {
+//     auto RfP = Context::RfP;
+//     auto beam = Context::Beam;
+//     auto epsilon = 1e-8;
+//     auto params = string(TEST_FILES "/Distributions/line_density2/");
+
+//     auto long_tracker = new RingAndRfSection(RfP);
+//     vector<RingAndRfSection *> trackerList{long_tracker, long_tracker};
+//     auto fullRing = new FullRingAndRf(trackerList);
+
+//     map<string, string> line_density_opt;
+//     line_density_opt["type"] = "binomial";
+//     line_density_opt["bunch_length"] = "100e-9";
+//     line_density_opt["density_variable"] = "density_from_J";
+//     line_density_opt["exponent"] = "1.5";
+
+//     matched_from_line_density(beam, fullRing, line_density_opt);
+
+//     f_vector_t v;
+//     util::read_vector_from_file(v, params + "dt.txt");
+
+//     ASSERT_EQ(v.size(), beam->dt.size());
+//     for (uint i = 0; i < v.size(); ++i) {
+//         auto ref = v[i];
+//         auto real = beam->dt[i];
+//         ASSERT_NEAR(ref, real, epsilon * max(abs(ref), abs(real)))
+//                 << "Testing of beam->dt failed on i " << i << endl;
+//     }
+
+//     util::read_vector_from_file(v, params + "dE.txt");
+
+//     ASSERT_EQ(v.size(), beam->dE.size());
+//     for (uint i = 0; i < v.size(); ++i) {
+//         auto ref = v[i];
+//         auto real = beam->dE[i];
+//         ASSERT_NEAR(ref, real, epsilon * max(abs(ref), abs(real)))
+//                 << "Testing of beam->dE failed on i " << i << endl;
+//     }
+
+//     delete long_tracker;
+//     delete fullRing;
+// }
+
+TEST_F(testDistributions, matched_from_line_density3)
 {
     auto RfP = Context::RfP;
-    auto beam = Context::Beam;
+    auto Beam = Context::Beam;
+    auto Slice = new Slices(RfP, Beam, N_slices);
     auto epsilon = 1e-8;
-    auto params = string(TEST_FILES "/Distributions/line_density1/");
+    auto params = string(TEST_FILES "/Distributions/line_density3/");
+    string datafiles = DEMO_FILES "/TC5_Wake_impedance/";
+
+
+    f_vector_t v;
+    util::read_vector_from_file(v, datafiles + "TC5_new_HQ_table.dat");
+
+    f_vector_t R_shunt, f_res, Q_factor;
+
+    R_shunt.reserve(v.size() / 3);
+    f_res.reserve(v.size() / 3);
+    Q_factor.reserve(v.size() / 3);
+
+    for (uint i = 0; i < v.size(); i += 3) {
+        f_res.push_back(v[i] * 1e9);
+        Q_factor.push_back(v[i + 1]);
+        R_shunt.push_back(v[i + 2] * 1e6);
+    }
+
+    auto resonator = new Resonators(R_shunt, f_res, Q_factor);
+
+    vector<Intensity *> wakeSourceList({resonator});
+    auto indVoltTime = new InducedVoltageTime(Slice, wakeSourceList);
+    vector<InducedVoltage *> indVoltList({indVoltTime});
+
+    auto totVolt = new TotalInducedVoltage(Beam, Slice, indVoltList);
 
     auto long_tracker = new RingAndRfSection(RfP);
     vector<RingAndRfSection *> trackerList{long_tracker};
@@ -421,80 +535,37 @@ TEST_F(testDistributions, matched_from_line_density1)
 
     map<string, string> line_density_opt;
     line_density_opt["type"] = "gaussian";
-    line_density_opt["bunch_length"] = "200e-9";
-    line_density_opt["density_variable"] = "density_from_J";
-
-    matched_from_line_density(beam, fullRing, line_density_opt);
-
-    f_vector_t v;
-    util::read_vector_from_file(v, params + "dt.txt");
-
-    ASSERT_EQ(v.size(), beam->dt.size());
-    for (uint i = 0; i < v.size(); ++i) {
-        auto ref = v[i];
-        auto real = beam->dt[i];
-        ASSERT_NEAR(ref, real, epsilon * max(abs(ref), abs(real)))
-                << "Testing of beam->dt failed on i " << i << endl;
-    }
-
-    util::read_vector_from_file(v, params + "dE.txt");
-
-    ASSERT_EQ(v.size(), beam->dE.size());
-    for (uint i = 0; i < v.size(); ++i) {
-        auto ref = v[i];
-        auto real = beam->dE[i];
-        ASSERT_NEAR(ref, real, epsilon * max(abs(ref), abs(real)))
-                << "Testing of beam->dE failed on i " << i << endl;
-    }
-
-    delete long_tracker;
-    delete fullRing;
-}
-
-
-TEST_F(testDistributions, matched_from_line_density2)
-{
-    auto RfP = Context::RfP;
-    auto beam = Context::Beam;
-    auto epsilon = 1e-8;
-    auto params = string(TEST_FILES "/Distributions/line_density2/");
-
-    auto long_tracker = new RingAndRfSection(RfP);
-    vector<RingAndRfSection *> trackerList{long_tracker, long_tracker};
-    auto fullRing = new FullRingAndRf(trackerList);
-
-    map<string, string> line_density_opt;
-    line_density_opt["type"] = "binomial";
     line_density_opt["bunch_length"] = "100e-9";
     line_density_opt["density_variable"] = "density_from_J";
     line_density_opt["exponent"] = "1.5";
 
-    matched_from_line_density(beam, fullRing, line_density_opt);
+    matched_from_line_density(Beam, fullRing, line_density_opt,
+                              FullRingAndRf::lowest_freq, totVolt);
 
-    f_vector_t v;
-    util::read_vector_from_file(v, params + "dt.txt");
+    // util::read_vector_from_file(v, params + "dt.txt");
 
-    ASSERT_EQ(v.size(), beam->dt.size());
-    for (uint i = 0; i < v.size(); ++i) {
-        auto ref = v[i];
-        auto real = beam->dt[i];
-        ASSERT_NEAR(ref, real, epsilon * max(abs(ref), abs(real)))
-                << "Testing of beam->dt failed on i " << i << endl;
-    }
+    // ASSERT_EQ(v.size(), Beam->dt.size());
+    // for (uint i = 0; i < v.size(); ++i) {
+    //     auto ref = v[i];
+    //     auto real = Beam->dt[i];
+    //     ASSERT_NEAR(ref, real, epsilon * max(abs(ref), abs(real)))
+    //             << "Testing of Beam->dt failed on i " << i << endl;
+    // }
 
-    util::read_vector_from_file(v, params + "dE.txt");
+    // util::read_vector_from_file(v, params + "dE.txt");
 
-    ASSERT_EQ(v.size(), beam->dE.size());
-    for (uint i = 0; i < v.size(); ++i) {
-        auto ref = v[i];
-        auto real = beam->dE[i];
-        ASSERT_NEAR(ref, real, epsilon * max(abs(ref), abs(real)))
-                << "Testing of beam->dE failed on i " << i << endl;
-    }
+    // ASSERT_EQ(v.size(), Beam->dE.size());
+    // for (uint i = 0; i < v.size(); ++i) {
+    //     auto ref = v[i];
+    //     auto real = Beam->dE[i];
+    //     ASSERT_NEAR(ref, real, epsilon * max(abs(ref), abs(real)))
+    //             << "Testing of Beam->dE failed on i " << i << endl;
+    // }
 
     delete long_tracker;
     delete fullRing;
 }
+
 
 
 TEST_F(testDistributions, matched_from_distribution_density1)
