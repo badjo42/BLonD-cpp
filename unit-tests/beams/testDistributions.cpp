@@ -496,7 +496,7 @@ TEST(testHelpers, distribution_density_function4)
 //     delete fullRing;
 // }
 
-TEST_F(testDistributions, matched_from_line_density3)
+TEST_F(testDistributions, DISABLED_matched_from_line_density3)
 {
     auto RfP = Context::RfP;
     auto Beam = Context::Beam;
