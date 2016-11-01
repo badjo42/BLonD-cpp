@@ -237,8 +237,8 @@ TEST_F(testInducedVoltage, generation1)
 
     std::vector<Intensity *> wakeSourceList({resonator});
     auto indVoltTime = new InducedVoltageTime(slices, wakeSourceList);
-    f_vector_t res = indVoltTime->induced_voltage_generation(beam);
-
+    indVoltTime->induced_voltage_generation(beam);
+    auto res = indVoltTime->fInducedVoltage;
     std::string params = std::string(TEST_FILES "/Impedances/") +
                          "InducedVoltage/InducedVoltageTime/generation1/";
 
@@ -313,7 +313,8 @@ TEST_F(testInducedVoltage, convolution1)
     auto indVoltTime =
         new InducedVoltageTime(slices, wakeSourceList,
                                InducedVoltageTime::time_or_freq::time_domain);
-    f_vector_t res = indVoltTime->induced_voltage_generation(beam);
+    indVoltTime->induced_voltage_generation(beam);
+    auto res = indVoltTime->fInducedVoltage;
 
     std::string params = std::string(TEST_FILES "/Impedances/") +
                          "InducedVoltage/InducedVoltageTime/convolution1/";

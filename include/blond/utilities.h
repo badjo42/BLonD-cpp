@@ -52,7 +52,7 @@
 
 
 
-#define all(c) (c).begin(),(c).end() 
+#define ALL(c) (c).begin(),(c).end() 
 #define FOR(c, it) for(auto it = c.begin(); it != c.end(); it++)
 
 namespace util {

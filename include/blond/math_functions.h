@@ -95,15 +95,16 @@ namespace mymath {
     // @y: the interpolated values, same shape as x
     // @left: value to return for x < xp[0]
     // @right: value to return for x > xp[last]
-    static inline void lin_interp(const std::vector<double> &x,
-                                  const std::vector<double> &xp,
-                                  const std::vector<double> &yp,
-                                  std::vector<double> &y,
-                                  const double left,
-                                  const double right)
+    static inline void interp(const std::vector<double> &x,
+                              const std::vector<double> &xp,
+                              const std::vector<double> &yp,
+                              std::vector<double> &y,
+                              const double left,
+                              const double right)
     {
         // assert(y.empty());
         assert(xp.size() == yp.size());
+        assert(std::is_sorted(xp.begin(), xp.end()));
         // const double left = yp.front();
         // const double right = yp.back();
         y.resize(x.size());
@@ -141,22 +142,33 @@ namespace mymath {
         }
     }
 
-    static inline void lin_interp(const std::vector<double> &x,
-                                  const std::vector<double> &xp,
-                                  const std::vector<double> &yp,
-                                  std::vector<double> &y)
+    static inline void interp(const std::vector<double> &x,
+                              const std::vector<double> &xp,
+                              const std::vector<double> &yp,
+                              std::vector<double> &y)
     {
         auto left = yp.front();
         auto right = yp.back();
-        lin_interp(x, xp, yp, y, left, right);
+        interp(x, xp, yp, y, left, right);
     }
 
-    static inline f_vector_t lin_interp(const f_vector_t &x,
-                                        const f_vector_t &xp,
-                                        const f_vector_t &yp)
+    static inline f_vector_t interp(const f_vector_t &x,
+                                    const f_vector_t &xp,
+                                    const f_vector_t &yp)
     {
         f_vector_t res;
-        lin_interp(x, xp, yp, res);
+        interp(x, xp, yp, res);
+        return res;
+    }
+
+    static inline f_vector_t interp(const f_vector_t &x,
+                                    const f_vector_t &xp,
+                                    const f_vector_t &yp,
+                                    const double left,
+                                    const double right)
+    {
+        f_vector_t res;
+        interp(x, xp, yp, res, left, right);
         return res;
     }
 
@@ -222,7 +234,7 @@ namespace mymath {
 
 
     template <typename T>
-    static inline double trapezoid(T *f, const double *deltaX, const int nsub)
+    static inline double trapezoid(const T *f, const double *deltaX, const int nsub)
     {
         // initialize the partial sum to be f(a)+f(b) and
         // deltaX to be the step size using nsub subdivisions
@@ -239,7 +251,14 @@ namespace mymath {
     }
 
     template <typename T>
-    static inline double trapezoid(T *f, const double deltaX, const int nsub)
+    static inline double trapezoid(const std::vector<T> &f,
+                                   const std::vector<double> &deltaX)
+    {
+        return trapezoid<T>(f.data(), deltaX.data(), f.size());
+    }
+
+    template <typename T>
+    static inline double trapezoid(const T *f, const double deltaX, const int nsub)
     {
         // initialize the partial sum to be f(a)+f(b) and
         // deltaX to be the step size using nsub subdivisions
@@ -257,6 +276,12 @@ namespace mymath {
 
         // return approximation
         return psum;
+    }
+
+    template <typename T>
+    static inline double trapezoid(const std::vector<T> &f, const double deltaX)
+    {
+        return trapezoid<T>(f.data(), deltaX, f.size());
     }
 
     template <typename T>
