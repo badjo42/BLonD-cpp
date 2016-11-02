@@ -384,5 +384,21 @@ namespace mymath {
     {
         return (T(0) < val) - (val < T(0));
     }
+
+
+    template <typename T>
+    static inline void meshgrid(const std::vector<T> &in1,
+                                const std::vector<T> &in2,
+                                std::vector< std::vector<T> > &out1,
+                                std::vector< std::vector<T> > &out2)
+    {
+        out1.clear(); out2.clear();
+        for (uint i = 0; i < in2.size(); i++)
+            out1.push_back(in1);
+        
+        const int cols = in1.size();
+        FOR(in2, e) out2.push_back(std::vector<T>(cols, *e));
+
+    }
 }
 #endif /* INCLUDES_MATH_FUNCTIONS_H_ */

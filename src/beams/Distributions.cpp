@@ -181,7 +181,7 @@ void matched_from_line_density(Beams *beam,
         potential_well_cut(time_coord_array, total_potential,
                            time_coord_sep, potential_well_sep);
         // time_coord_sep and potential_well_sep have been doubled in turn 2
-        
+
         // cout << "time_coord_sep size: " << time_coord_sep.size() << "\n";
         // cout << "potential_well_sep size: " << potential_well_sep.size() << "\n";
 
@@ -279,6 +279,8 @@ void matched_from_line_density(Beams *beam,
     f_vector_2d_t density_function_average;
     f_vector_2d_t hamiltonian_average;
     f_vector_t potential_half;
+    f_vector_t density_function, hamiltonian_coord;
+
     if (half_option == "both") {
         abel_both_step = 2;
         density_function_average = f_vector_2d_t(n_points_abel, f_vector_t(2));
@@ -353,8 +355,8 @@ void matched_from_line_density(Beams *beam,
         auto potential_abel = interp(time_abel, time_coord_half,
                                      potential_half);
 
-        f_vector_t density_function(n_points_abel, 0.);
-        f_vector_t hamiltonian_coord(n_points_abel, 0.);
+        density_function.resize(n_points_abel, 0.);
+        hamiltonian_coord.resize(n_points_abel, 0.);
 
         if (half_option == "first" || (half_option == "both" && abel_index == 0)) {
             for (int i = 0; i < n_points_abel; i++) {
@@ -416,13 +418,57 @@ void matched_from_line_density(Beams *beam,
     }
 
     // check potential_half
-    cout << "potential_half size: " << potential_half.size() << "\n";
-    cout << "potential_half sum: " << accumulate(ALL(potential_half), 0.) << "\n";
-    cout << "potential_half max: " << *max_element(ALL(potential_half)) << "\n";
-    cout << "potential_half min: " << *min_element(ALL(potential_half)) << "\n";
+    // cout << "potential_half size: " << potential_half.size() << "\n";
+    // cout << "potential_half sum: " << accumulate(ALL(potential_half), 0.) << "\n";
+    // cout << "potential_half max: " << *max_element(ALL(potential_half)) << "\n";
+    // cout << "potential_half min: " << *min_element(ALL(potential_half)) << "\n";
 
-// TODO continue from line 294 distributions.py
+    if (half_option == "both") {
+        hamiltonian_coord.clear();
+        f_vector_t hamiltonian_average1;
+        f_vector_t density_average0, density_average1;
+        FOR(hamiltonian_average, row) {
+            hamiltonian_coord.push_back(row[0][0]);
+            hamiltonian_average1.push_back(row[0][1]);
+        }
+        FOR(density_function_average, row) {
+            density_average0.push_back(row[0][0]);
+            density_average1.push_back(row[0][1]);
+        }
+        density_function = interp(hamiltonian_coord, hamiltonian_average1,
+                                  density_average1);
+        FOR(density_function, it) {
+            int idx = it - density_function.begin();
+            *it = (*it + density_average0[idx]) / 2.;
+        }
+    }
 
+    auto max_potential = *max_element(ALL(potential_half));
+    auto max_deltaE = sqrt(max_potential / eom_factor_dE);
+
+
+    int n_points_grid = 1000;
+    auto grid_indexes = arange<double>(0., n_points_grid);
+    FOR(grid_indexes, it) *it = *it * time_line_den.size() / n_points_grid;
+    auto time_coord_indexes = arange<double>(0., time_line_den.size());
+    auto time_coord_for_grid = interp(grid_indexes, time_coord_indexes,
+                                      time_line_den);
+    auto deltaE_for_grid = linspace(-max_deltaE, max_deltaE, n_points_grid);
+    auto potential_well_for_grid = interp(time_coord_for_grid, time_coord_sep,
+                                          potential_well_sep);
+
+    auto min_potential_well = *min_element(ALL(potential_well_for_grid));
+    FOR(potential_well_for_grid, it) *it -= min_potential_well;
+
+    f_vector_2d_t time_grid, deltaE_grid, potential_well_grid;
+
+    meshgrid(time_coord_for_grid, deltaE_for_grid, time_grid, deltaE_grid);
+    meshgrid(potential_well_for_grid, potential_well_for_grid,
+             potential_well_grid, potential_well_grid);
+
+    // continue from line 334 distribution.py
+    // requires some complex vector operations (matrix multiply)
+    // interp over an array
 
 }
 
