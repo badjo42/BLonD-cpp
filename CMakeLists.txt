@@ -95,7 +95,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} \
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} \
     -ffast-math \
-    -march=native")
+    -march=native \
+    -fopt-info-vec=report.txt")
      # \
     # -fopt-info-vec=report.txt")
 

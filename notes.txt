@@ -1,6 +1,5 @@
 ### TODO
-*   add a macro for vector.begin(), vector.end()
-
+* profile vector math, come up with an optimal implementation
 ### NOTES
 
 

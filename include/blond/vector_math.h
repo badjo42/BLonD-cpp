@@ -9,18 +9,25 @@
 
 #include <algorithm>
 #include <functional>
-
+#include <cassert>
+#include <vector>
 //
 // Useful vector operations
 //
 
 // apply a unary function func at every element of vector a
 template <typename T, typename F>
-std::vector<T> apply_f(const std::vector<T> &a, F func)
+static inline std::vector<T> apply_f(const std::vector<T> &a, F func)
 {
+    const int size = a.size();
     std::vector<T> result;
-    result.reserve(a.size());
-    std::transform(a.begin(), a.end(), std::back_inserter(result), func);
+    result.resize(size);
+
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = func(a[i]);
+
+    // std::transform(a.begin(), a.end(), std::back_inserter(result), func);
     return result;
 }
 
@@ -28,101 +35,154 @@ std::vector<T> apply_f(const std::vector<T> &a, F func)
 // Vector - Vector basic operations
 //
 
+/*
+template <typename T, typename F>
+void binary_op_kernel(const T *__restrict a,
+                const T *__restrict b,
+                T *__restrict result,
+                const int size,
+                F op)
+{
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = op(a[i], b[i]);
+}
+*/
+
 template <typename T>
-std::vector<T> operator+(const std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator+(const std::vector<T> &a, const std::vector<T> &b)
 {
     assert(a.size() == b.size());
+    const int size = a.size();
 
     std::vector<T> result;
-    result.reserve(a.size());
+    result.resize(size);
 
-    std::transform(a.begin(), a.end(), b.begin(),
-                   std::back_inserter(result), std::plus<T>());
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = a[i] + b[i];
+
+    // std::transform(a.begin(), a.end(), b.begin(),
+    //                std::back_inserter(result), std::plus<T>());
     return result;
-
 }
 
 template <typename T>
-std::vector<T> operator+=(std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator+=(std::vector<T> &a, const std::vector<T> &b)
 {
     assert(a.size() == b.size());
+    const int size = a.size();
 
-    std::transform(a.begin(), a.end(), b.begin(),
-                   a.begin(), std::plus<T>());
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        a[i] = a[i] + b[i];
+
+    // std::transform(a.begin(), a.end(), b.begin(),
+    //                a.begin(), std::plus<T>());
     return a;
 }
 
 
 template <typename T>
-std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
 {
     assert(a.size() == b.size());
+    const int size = a.size();
 
     std::vector<T> result;
-    result.reserve(a.size());
+    result.reserve(size);
 
-    std::transform(a.begin(), a.end(), b.begin(),
-                   std::back_inserter(result), std::minus<T>());
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = a[i] - b[i];
+
+    // std::transform(a.begin(), a.end(), b.begin(),
+    //                std::back_inserter(result), std::minus<T>());
     return result;
 
 }
 
 template <typename T>
-std::vector<T> operator-=(std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator-=(std::vector<T> &a, const std::vector<T> &b)
 {
     assert(a.size() == b.size());
+    const int size = a.size();
 
-    std::transform(a.begin(), a.end(), b.begin(),
-                   a.begin(), std::minus<T>());
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        a[i] = a[i] - b[i];
+
+    // std::transform(a.begin(), a.end(), b.begin(),
+    //                a.begin(), std::minus<T>());
     return a;
 }
 
 template <typename T>
-std::vector<T> operator*(const std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator*(const std::vector<T> &a, const std::vector<T> &b)
 {
     assert(a.size() == b.size());
+    const int size = a.size();
 
     std::vector<T> result;
-    result.reserve(a.size());
+    result.resize(size);
 
-    std::transform(a.begin(), a.end(), b.begin(),
-                   std::back_inserter(result), std::multiplies<T>());
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = a[i] * b[i];
+
+    // std::transform(a.begin(), a.end(), b.begin(),
+    //                std::back_inserter(result), std::multiplies<T>());
     return result;
 
 }
 
 template <typename T>
-std::vector<T> operator*=(std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator*=(std::vector<T> &a, const std::vector<T> &b)
 {
     assert(a.size() == b.size());
+    const int size = a.size();
 
-    std::transform(a.begin(), a.end(), b.begin(),
-                   a.begin(), std::multiplies<T>());
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        a[i] = a[i] * b[i];
+
+    // std::transform(a.begin(), a.end(), b.begin(),
+    //                a.begin(), std::multiplies<T>());
     return a;
 }
 
 
 template <typename T>
-std::vector<T> operator/(const std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator/(const std::vector<T> &a, const std::vector<T> &b)
 {
     assert(a.size() == b.size());
+    const int size = a.size();
 
     std::vector<T> result;
-    result.reserve(a.size());
+    result.resize(size);
 
-    std::transform(a.begin(), a.end(), b.begin(),
-                   std::back_inserter(result), std::divides<T>());
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = a[i] / b[i];
+
+    // std::transform(a.begin(), a.end(), b.begin(),
+    //                std::back_inserter(result), std::divides<T>());
     return result;
 
 }
 
 template <typename T>
-std::vector<T> operator/=(std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator/=(std::vector<T> &a, const std::vector<T> &b)
 {
     assert(a.size() == b.size());
+    const int size = a.size();
 
-    std::transform(a.begin(), a.end(), b.begin(),
-                   a.begin(), std::divides<T>());
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        a[i] = a[i] / b[i];
+
+    // std::transform(a.begin(), a.end(), b.begin(),
+    //                a.begin(), std::divides<T>());
     return a;
 }
 
@@ -133,121 +193,180 @@ std::vector<T> operator/=(std::vector<T> &a, const std::vector<T> &b)
 
 
 template <typename T, typename U>
-std::vector<T> operator+(const std::vector<T> &a, const U &b)
+static inline std::vector<T> operator+(const std::vector<T> &a, const U &b)
 {
+    const int size = a.size();
 
     std::vector<T> result;
-    result.reserve(a.size());
+    result.resize(size);
 
-    std::transform(a.begin(), a.end(), std::back_inserter(result),
-                   std::bind2nd(std::plus<T>(), b));
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = a[i] + b;
+
+    // std::transform(a.begin(), a.end(), std::back_inserter(result),
+    //                std::bind2nd(std::plus<T>(), b));
     return result;
 
 }
 
 template <typename T, typename U>
-std::vector<T> operator+(const U &b, const std::vector<T> &a)
+static inline std::vector<T> operator+(const U &b, const std::vector<T> &a)
 {
     return a + b;
 }
 
 template <typename T, typename U>
-std::vector<T> operator+=(std::vector<T> &a, const U &b)
+static inline std::vector<T> operator+=(std::vector<T> &a, const U &b)
 {
-    std::transform(a.begin(), a.end(), a.begin(),
-                   std::bind2nd(std::plus<T>(), b));
+    const int size = a.size();
+
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        a[i] = a[i] + b;
+
+    // std::transform(a.begin(), a.end(), a.begin(),
+    //                std::bind2nd(std::plus<T>(), b));
     return a;
 }
 
 
 template <typename T, typename U>
-std::vector<T> operator-(const std::vector<T> &a, const U &b)
+static inline std::vector<T> operator-(const std::vector<T> &a, const U &b)
 {
-    std::vector<T> result;
-    result.reserve(a.size());
+    const int size = a.size();
 
-    std::transform(a.begin(), a.end(), std::back_inserter(result),
-                   std::bind2nd(std::minus<T>(), b));
+    std::vector<T> result;
+    result.resize(size);
+
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = a[i] - b;
+
+    // std::transform(a.begin(), a.end(), std::back_inserter(result),
+    //                std::bind2nd(std::minus<T>(), b));
     return result;
 
 }
 
 template <typename T, typename U>
-std::vector<T> operator-(const U &b, const std::vector<T> &a)
+static inline std::vector<T> operator-(const U &b, const std::vector<T> &a)
 {
-    std::vector<T> result;
-    result.reserve(a.size());
+    const int size = a.size();
 
-    std::transform(a.begin(), a.end(), std::back_inserter(result),
-                   std::bind1st(std::minus<T>(), b));
+    std::vector<T> result;
+    result.resize(size);
+
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = b - a[i];
+
+    // std::transform(a.begin(), a.end(), std::back_inserter(result),
+    //                std::bind1st(std::minus<T>(), b));
     return result;
 
 }
 
 template <typename T, typename U>
-std::vector<T> operator-=(std::vector<T> &a, const U &b)
+static inline std::vector<T> operator-=(std::vector<T> &a, const U &b)
 {
-    std::transform(a.begin(), a.end(), a.begin(),
-                   std::bind2nd(std::minus<T>(), b));
+    const int size = a.size();
+
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        a[i] = a[i] - b;
+
+    // std::transform(a.begin(), a.end(), a.begin(),
+    //                std::bind2nd(std::minus<T>(), b));
     return a;
 }
 
 template <typename T, typename U>
-std::vector<T> operator*(const std::vector<T> &a, const U &b)
+static inline std::vector<T> operator*(const std::vector<T> &a, const U &b)
 {
-    std::vector<T> result;
-    result.reserve(a.size());
+    const int size = a.size();
 
-    std::transform(a.begin(), a.end(), std::back_inserter(result),
-                   std::bind2nd(std::multiplies<T>(), b));
+    std::vector<T> result;
+    result.resize(size);
+
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = a[i] * b;
+
+    // std::transform(a.begin(), a.end(), std::back_inserter(result),
+    //                std::bind2nd(std::multiplies<T>(), b));
     return result;
 
 }
 
 template <typename T, typename U>
-std::vector<T> operator*(const U &b, const std::vector<T> &a)
+static inline std::vector<T> operator*(const U &b, const std::vector<T> &a)
 {
     return a * b;
 }
 
 template <typename T, typename U>
-std::vector<T> operator*=(std::vector<T> &a, const U &b)
+static inline std::vector<T> operator*=(std::vector<T> &a, const U &b)
 {
-    std::transform(a.begin(), a.end(), a.begin(),
-                   std::bind2nd(std::multiplies<T>(), b));
+    const int size = a.size();
+
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        a[i] = a[i] * b;
+
+    // std::transform(a.begin(), a.end(), a.begin(),
+    //                std::bind2nd(std::multiplies<T>(), b));
     return a;
 }
 
 
 template <typename T, typename U>
-std::vector<T> operator/(const std::vector<T> &a, const U &b)
+static inline std::vector<T> operator/(const std::vector<T> &a, const U &b)
 {
-    std::vector<T> result;
-    result.reserve(a.size());
+    const int size = a.size();
 
-    std::transform(a.begin(), a.end(), std::back_inserter(result),
-                   std::bind2nd(std::divides<T>(), b));
+    std::vector<T> result;
+    result.resize(size);
+
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = a[i] / b;
+
+    // std::transform(a.begin(), a.end(), std::back_inserter(result),
+    //                std::bind2nd(std::divides<T>(), b));
     return result;
 
 }
 
 template <typename T, typename U>
-std::vector<T> operator/(const U &b, const std::vector<T> &a)
+static inline std::vector<T> operator/(const U &b, const std::vector<T> &a)
 {
-    std::vector<T> result;
-    result.reserve(a.size());
+    const int size = a.size();
 
-    std::transform(a.begin(), a.end(), std::back_inserter(result),
-                   std::bind1st(std::divides<T>(), b));
+    std::vector<T> result;
+    result.resize(size);
+
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        result[i] = b / a[i];
+
+    // std::transform(a.begin(), a.end(), std::back_inserter(result),
+    //                std::bind1st(std::divides<T>(), b));
     return result;
 
 }
 
 template <typename T, typename U>
-std::vector<T> operator/=(std::vector<T> &a, const U &b)
+static inline std::vector<T> operator/=(std::vector<T> &a, const U &b)
 {
-    std::transform(a.begin(), a.end(), a.begin(),
-                   std::bind2nd(std::divides<T>(), b));
+    const int size = a.size();
+
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        a[i] = a[i] / b;
+
+    // std::transform(a.begin(), a.end(), a.begin(),
+    //                std::bind2nd(std::divides<T>(), b));
     return a;
 }
 
