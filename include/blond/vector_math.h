@@ -11,88 +11,65 @@
 #include <functional>
 #include <cassert>
 #include <vector>
+
 //
 // Useful vector operations
 //
+
+
 
 // apply a unary operator op at every element of vector a (op a)
 template <typename T, typename F>
 static inline std::vector<T> apply_f(const std::vector<T> &a, F op)
 {
-    const int size = a.size();
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = op(a[i]);
-
-    // std::transform(a.begin(), a.end(), std::back_inserter(result), op);
+    std::vector<T> result(a.size());
+    std::transform(a.begin(), a.end(), result.begin(), op);
     return result;
 }
 
+// apply a unary operator op at every element of vector a (op a)
+template <typename T, typename F>
+static inline void apply_f_in_place(std::vector<T> &a, F op)
+{
+    std::transform(a.begin(), a.end(), a.begin(), op);
+}
 
 // apply a binary operator op at every pair of elements from a, b (a op b)
 template <typename T, typename F>
 static inline std::vector<T> apply_f(const std::vector<T> &a,
                                      const std::vector<T> &b, F op)
 {
-    const int size = a.size();
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = op(a[i], b[i]);
-
+    std::vector<T> result(a.size());
+    std::transform(a.begin(), a.end(), b.begin(), result.begin(), op);
     return result;
 }
+
+// apply a binary operator op at every pair of elements from a, b (a op b)
+template <typename T, typename F>
+static inline void apply_f_in_place(std::vector<T> &a,
+                                    const std::vector<T> &b, F op)
+{
+    assert(a.size() == b.size());
+    std::transform(a.begin(), a.end(), b.begin(), a.begin(), op);
+}
+
 
 //
 // Vector - Vector basic operations
 //
 
-/*
-template <typename T, typename F>
-void binary_op_kernel(const T *__restrict a,
-                const T *__restrict b,
-                T *__restrict result,
-                const int size,
-                F op)
-{
-    for (int i = 0; i < size; i++)
-        result[i] = op(a[i], b[i]);
-}
-*/
-
 template <typename T>
 static inline std::vector<T> operator+(const std::vector<T> &a,
                                        const std::vector<T> &b)
 {
-    assert(a.size() == b.size());
-    const int size = a.size();
-
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = a[i] + b[i];
-
-    // std::transform(a.begin(), a.end(), b.begin(),
-    //                std::back_inserter(result), std::plus<T>());
-    return result;
+    return apply_f(a, b, std::plus<T>());
 }
 
 template <typename T>
 static inline std::vector<T> operator+=(std::vector<T> &a,
                                         const std::vector<T> &b)
 {
-    assert(a.size() == b.size());
-    const int size = a.size();
-
-    for (int i = 0; i < size; i++)
-        a[i] = a[i] + b[i];
-
-    // std::transform(a.begin(), a.end(), b.begin(),
-    //                a.begin(), std::plus<T>());
+    apply_f_in_place(a, b, std::plus<T>());
     return a;
 }
 
@@ -101,33 +78,14 @@ template <typename T>
 static inline std::vector<T> operator-(const std::vector<T> &a,
                                        const std::vector<T> &b)
 {
-    assert(a.size() == b.size());
-    const int size = a.size();
-
-    std::vector<T> result;
-    result.reserve(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = a[i] - b[i];
-
-    // std::transform(a.begin(), a.end(), b.begin(),
-    //                std::back_inserter(result), std::minus<T>());
-    return result;
-
+    return apply_f(a, b, std::minus<T>());
 }
 
 template <typename T>
 static inline std::vector<T> operator-=(std::vector<T> &a,
                                         const std::vector<T> &b)
 {
-    assert(a.size() == b.size());
-    const int size = a.size();
-
-    for (int i = 0; i < size; i++)
-        a[i] = a[i] - b[i];
-
-    // std::transform(a.begin(), a.end(), b.begin(),
-    //                a.begin(), std::minus<T>());
+    apply_f_in_place(a, b, std::minus<T>());
     return a;
 }
 
@@ -135,33 +93,14 @@ template <typename T>
 static inline std::vector<T> operator*(const std::vector<T> &a,
                                        const std::vector<T> &b)
 {
-    assert(a.size() == b.size());
-    const int size = a.size();
-
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = a[i] * b[i];
-
-    // std::transform(a.begin(), a.end(), b.begin(),
-    //                std::back_inserter(result), std::multiplies<T>());
-    return result;
-
+    return apply_f(a, b, std::multiplies<T>());
 }
 
 template <typename T>
 static inline std::vector<T> operator*=(std::vector<T> &a,
                                         const std::vector<T> &b)
 {
-    assert(a.size() == b.size());
-    const int size = a.size();
-
-    for (int i = 0; i < size; i++)
-        a[i] = a[i] * b[i];
-
-    // std::transform(a.begin(), a.end(), b.begin(),
-    //                a.begin(), std::multiplies<T>());
+    apply_f_in_place(a, b, std::multiplies<T>());
     return a;
 }
 
@@ -170,33 +109,14 @@ template <typename T>
 static inline std::vector<T> operator/(const std::vector<T> &a,
                                        const std::vector<T> &b)
 {
-    assert(a.size() == b.size());
-    const int size = a.size();
-
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = a[i] / b[i];
-
-    // std::transform(a.begin(), a.end(), b.begin(),
-    //                std::back_inserter(result), std::divides<T>());
-    return result;
-
+    return apply_f(a, b, std::divides<T>());
 }
 
 template <typename T>
 static inline std::vector<T> operator/=(std::vector<T> &a,
                                         const std::vector<T> &b)
 {
-    assert(a.size() == b.size());
-    const int size = a.size();
-
-    for (int i = 0; i < size; i++)
-        a[i] = a[i] / b[i];
-
-    // std::transform(a.begin(), a.end(), b.begin(),
-    //                a.begin(), std::divides<T>());
+    apply_f_in_place(a, b, std::divides<T>());
     return a;
 }
 
@@ -209,168 +129,76 @@ static inline std::vector<T> operator/=(std::vector<T> &a,
 template <typename T, typename U>
 static inline std::vector<T> operator+(const std::vector<T> &a, const U &b)
 {
-    const int size = a.size();
-
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = a[i] + b;
-
-    // std::transform(a.begin(), a.end(), std::back_inserter(result),
-    //                std::bind2nd(std::plus<T>(), b));
-    return result;
-
+    return apply_f(a, std::bind2nd(std::plus<T>(), b));
 }
 
 template <typename T, typename U>
 static inline std::vector<T> operator+(const U &b, const std::vector<T> &a)
 {
-    return a + b;
+    return apply_f(a, std::bind2nd(std::plus<T>(), b));
 }
 
 template <typename T, typename U>
 static inline std::vector<T> operator+=(std::vector<T> &a, const U &b)
 {
-    const int size = a.size();
-
-    for (int i = 0; i < size; i++)
-        a[i] = a[i] + b;
-
-    // std::transform(a.begin(), a.end(), a.begin(),
-    //                std::bind2nd(std::plus<T>(), b));
+    apply_f_in_place(a, std::bind2nd(std::plus<T>(), b));
     return a;
 }
-
 
 template <typename T, typename U>
 static inline std::vector<T> operator-(const std::vector<T> &a, const U &b)
 {
-    const int size = a.size();
-
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = a[i] - b;
-
-    // std::transform(a.begin(), a.end(), std::back_inserter(result),
-    //                std::bind2nd(std::minus<T>(), b));
-    return result;
-
+    return apply_f(a, std::bind2nd(std::minus<T>(), b));
 }
 
 template <typename T, typename U>
 static inline std::vector<T> operator-(const U &b, const std::vector<T> &a)
 {
-    const int size = a.size();
-
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = b - a[i];
-
-    // std::transform(a.begin(), a.end(), std::back_inserter(result),
-    //                std::bind1st(std::minus<T>(), b));
-    return result;
-
+    return apply_f(a, std::bind1st(std::minus<T>(), b));
 }
 
 template <typename T, typename U>
 static inline std::vector<T> operator-=(std::vector<T> &a, const U &b)
 {
-    const int size = a.size();
-
-    for (int i = 0; i < size; i++)
-        a[i] = a[i] - b;
-
-    // std::transform(a.begin(), a.end(), a.begin(),
-    //                std::bind2nd(std::minus<T>(), b));
+    apply_f_in_place(a, std::bind2nd(std::minus<T>(), b));
     return a;
 }
 
 template <typename T, typename U>
 static inline std::vector<T> operator*(const std::vector<T> &a, const U &b)
 {
-    const int size = a.size();
-
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = a[i] * b;
-
-    // std::transform(a.begin(), a.end(), std::back_inserter(result),
-    //                std::bind2nd(std::multiplies<T>(), b));
-    return result;
-
+    return apply_f(a, std::bind2nd(std::multiplies<T>(), b));
 }
 
 template <typename T, typename U>
 static inline std::vector<T> operator*(const U &b, const std::vector<T> &a)
 {
-    return a * b;
+    return apply_f(a, std::bind2nd(std::multiplies<T>(), b));
 }
 
 template <typename T, typename U>
 static inline std::vector<T> operator*=(std::vector<T> &a, const U &b)
 {
-    const int size = a.size();
-
-    for (int i = 0; i < size; i++)
-        a[i] = a[i] * b;
-
-    // std::transform(a.begin(), a.end(), a.begin(),
-    //                std::bind2nd(std::multiplies<T>(), b));
+    apply_f_in_place(a, std::bind2nd(std::multiplies<T>(), b));
     return a;
 }
-
 
 template <typename T, typename U>
 static inline std::vector<T> operator/(const std::vector<T> &a, const U &b)
 {
-    const int size = a.size();
-
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = a[i] / b;
-
-    // std::transform(a.begin(), a.end(), std::back_inserter(result),
-    //                std::bind2nd(std::divides<T>(), b));
-    return result;
-
+    return apply_f(a, std::bind2nd(std::divides<T>(), b));
 }
 
 template <typename T, typename U>
 static inline std::vector<T> operator/(const U &b, const std::vector<T> &a)
 {
-    const int size = a.size();
-
-    std::vector<T> result;
-    result.resize(size);
-
-    for (int i = 0; i < size; i++)
-        result[i] = b / a[i];
-
-    // std::transform(a.begin(), a.end(), std::back_inserter(result),
-    //                std::bind1st(std::divides<T>(), b));
-    return result;
-
+    return apply_f(a, std::bind1st(std::divides<T>(), b));
 }
 
 template <typename T, typename U>
 static inline std::vector<T> operator/=(std::vector<T> &a, const U &b)
 {
-    const int size = a.size();
-
-    for (int i = 0; i < size; i++)
-        a[i] = a[i] / b;
-
-    // std::transform(a.begin(), a.end(), a.begin(),
-    //                std::bind2nd(std::divides<T>(), b));
+    apply_f_in_place(a, std::bind2nd(std::divides<T>(), b));
     return a;
 }
 
