@@ -15,19 +15,34 @@
 // Useful vector operations
 //
 
-// apply a unary function func at every element of vector a
+// apply a unary operator op at every element of vector a (op a)
 template <typename T, typename F>
-static inline std::vector<T> apply_f(const std::vector<T> &a, F func)
+static inline std::vector<T> apply_f(const std::vector<T> &a, F op)
 {
     const int size = a.size();
     std::vector<T> result;
     result.resize(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
-        result[i] = func(a[i]);
+        result[i] = op(a[i]);
 
-    // std::transform(a.begin(), a.end(), std::back_inserter(result), func);
+    // std::transform(a.begin(), a.end(), std::back_inserter(result), op);
+    return result;
+}
+
+
+// apply a binary operator op at every pair of elements from a, b (a op b)
+template <typename T, typename F>
+static inline std::vector<T> apply_f(const std::vector<T> &a,
+                                     const std::vector<T> &b, F op)
+{
+    const int size = a.size();
+    std::vector<T> result;
+    result.resize(size);
+
+    for (int i = 0; i < size; i++)
+        result[i] = op(a[i], b[i]);
+
     return result;
 }
 
@@ -43,14 +58,14 @@ void binary_op_kernel(const T *__restrict a,
                 const int size,
                 F op)
 {
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = op(a[i], b[i]);
 }
 */
 
 template <typename T>
-static inline std::vector<T> operator+(const std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator+(const std::vector<T> &a,
+                                       const std::vector<T> &b)
 {
     assert(a.size() == b.size());
     const int size = a.size();
@@ -58,7 +73,6 @@ static inline std::vector<T> operator+(const std::vector<T> &a, const std::vecto
     std::vector<T> result;
     result.resize(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = a[i] + b[i];
 
@@ -68,12 +82,12 @@ static inline std::vector<T> operator+(const std::vector<T> &a, const std::vecto
 }
 
 template <typename T>
-static inline std::vector<T> operator+=(std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator+=(std::vector<T> &a,
+                                        const std::vector<T> &b)
 {
     assert(a.size() == b.size());
     const int size = a.size();
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         a[i] = a[i] + b[i];
 
@@ -84,7 +98,8 @@ static inline std::vector<T> operator+=(std::vector<T> &a, const std::vector<T> 
 
 
 template <typename T>
-static inline std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator-(const std::vector<T> &a,
+                                       const std::vector<T> &b)
 {
     assert(a.size() == b.size());
     const int size = a.size();
@@ -92,7 +107,6 @@ static inline std::vector<T> operator-(const std::vector<T> &a, const std::vecto
     std::vector<T> result;
     result.reserve(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = a[i] - b[i];
 
@@ -103,12 +117,12 @@ static inline std::vector<T> operator-(const std::vector<T> &a, const std::vecto
 }
 
 template <typename T>
-static inline std::vector<T> operator-=(std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator-=(std::vector<T> &a,
+                                        const std::vector<T> &b)
 {
     assert(a.size() == b.size());
     const int size = a.size();
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         a[i] = a[i] - b[i];
 
@@ -118,7 +132,8 @@ static inline std::vector<T> operator-=(std::vector<T> &a, const std::vector<T> 
 }
 
 template <typename T>
-static inline std::vector<T> operator*(const std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator*(const std::vector<T> &a,
+                                       const std::vector<T> &b)
 {
     assert(a.size() == b.size());
     const int size = a.size();
@@ -126,7 +141,6 @@ static inline std::vector<T> operator*(const std::vector<T> &a, const std::vecto
     std::vector<T> result;
     result.resize(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = a[i] * b[i];
 
@@ -137,12 +151,12 @@ static inline std::vector<T> operator*(const std::vector<T> &a, const std::vecto
 }
 
 template <typename T>
-static inline std::vector<T> operator*=(std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator*=(std::vector<T> &a,
+                                        const std::vector<T> &b)
 {
     assert(a.size() == b.size());
     const int size = a.size();
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         a[i] = a[i] * b[i];
 
@@ -153,7 +167,8 @@ static inline std::vector<T> operator*=(std::vector<T> &a, const std::vector<T> 
 
 
 template <typename T>
-static inline std::vector<T> operator/(const std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator/(const std::vector<T> &a,
+                                       const std::vector<T> &b)
 {
     assert(a.size() == b.size());
     const int size = a.size();
@@ -161,7 +176,6 @@ static inline std::vector<T> operator/(const std::vector<T> &a, const std::vecto
     std::vector<T> result;
     result.resize(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = a[i] / b[i];
 
@@ -172,12 +186,12 @@ static inline std::vector<T> operator/(const std::vector<T> &a, const std::vecto
 }
 
 template <typename T>
-static inline std::vector<T> operator/=(std::vector<T> &a, const std::vector<T> &b)
+static inline std::vector<T> operator/=(std::vector<T> &a,
+                                        const std::vector<T> &b)
 {
     assert(a.size() == b.size());
     const int size = a.size();
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         a[i] = a[i] / b[i];
 
@@ -200,7 +214,6 @@ static inline std::vector<T> operator+(const std::vector<T> &a, const U &b)
     std::vector<T> result;
     result.resize(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = a[i] + b;
 
@@ -221,7 +234,6 @@ static inline std::vector<T> operator+=(std::vector<T> &a, const U &b)
 {
     const int size = a.size();
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         a[i] = a[i] + b;
 
@@ -239,7 +251,6 @@ static inline std::vector<T> operator-(const std::vector<T> &a, const U &b)
     std::vector<T> result;
     result.resize(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = a[i] - b;
 
@@ -257,7 +268,6 @@ static inline std::vector<T> operator-(const U &b, const std::vector<T> &a)
     std::vector<T> result;
     result.resize(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = b - a[i];
 
@@ -272,7 +282,6 @@ static inline std::vector<T> operator-=(std::vector<T> &a, const U &b)
 {
     const int size = a.size();
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         a[i] = a[i] - b;
 
@@ -289,7 +298,6 @@ static inline std::vector<T> operator*(const std::vector<T> &a, const U &b)
     std::vector<T> result;
     result.resize(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = a[i] * b;
 
@@ -310,7 +318,6 @@ static inline std::vector<T> operator*=(std::vector<T> &a, const U &b)
 {
     const int size = a.size();
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         a[i] = a[i] * b;
 
@@ -328,7 +335,6 @@ static inline std::vector<T> operator/(const std::vector<T> &a, const U &b)
     std::vector<T> result;
     result.resize(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = a[i] / b;
 
@@ -346,7 +352,6 @@ static inline std::vector<T> operator/(const U &b, const std::vector<T> &a)
     std::vector<T> result;
     result.resize(size);
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         result[i] = b / a[i];
 
@@ -361,7 +366,6 @@ static inline std::vector<T> operator/=(std::vector<T> &a, const U &b)
 {
     const int size = a.size();
 
-    #pragma omp parallel for
     for (int i = 0; i < size; i++)
         a[i] = a[i] / b;
 
