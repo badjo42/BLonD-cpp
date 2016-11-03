@@ -276,7 +276,7 @@ TEST(testApplyF, test5)
 {
     const double epsilon = 1e-10;
     f_vector_t a = linspace(0.1, 15.0, 132);
-    f_vector_t b = linspace(11.0, 14.0, 15);
+    f_vector_t b = linspace(11.0, 14.0, 132);
     auto c = apply_f(a, b, [](double a, double b) {return std::min(a, b);});
     for (uint i = 0; i < c.size(); ++i) {
         auto ref = std::min(a[i], b[i]);
