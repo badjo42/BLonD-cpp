@@ -14,6 +14,7 @@
 #include <blond/sin.h>
 #include <blond/utilities.h>
 #include <cmath>
+#include <random>
 #include <cassert>
 #include <blond/openmp.h>
 
@@ -386,6 +387,7 @@ namespace mymath {
     }
 
 
+    // TODO test this function
     template <typename T>
     static inline void meshgrid(const std::vector<T> &in1,
                                 const std::vector<T> &in2,
@@ -395,10 +397,44 @@ namespace mymath {
         out1.clear(); out2.clear();
         for (uint i = 0; i < in2.size(); i++)
             out1.push_back(in1);
-        
+
         const int cols = in1.size();
         FOR(in2, e) out2.push_back(std::vector<T>(cols, *e));
 
+    }
+
+    // TODO test this function
+    template <typename T>
+    static inline std::vector<T> flatten(const std::vector<std::vector<T> > &a)
+    {
+        std::vector<T> result;
+        FOR(a, row) {
+            result.insert(result.end(), (*row).begin(), (*row).end());
+        }
+        return result;
+    }
+
+    // TODO test this function
+    template <typename T, typename U>
+    static inline std::vector<T> random_choice(const std::vector<T> &elems,
+            const int size,
+            std::vector<U> weights = std::vector<U>())
+    {
+        if (weights.empty()) weights.resize(elems.size(), 1);
+        // double weights_sum = accumulate(ALL(weights), 0.0);
+        // for(uint i = 1; i < weights.resize(); i++)
+        for (uint i = 1; i < weights.size(); i++) {
+            weights[i] += weights[i - 1];
+        }
+        std::default_random_engine gen(0);
+        std::uniform_real_distribution<double> d(0.0, weights.back());
+        std::vector<T> result(size);
+        for (int i = 0; i < size; i++) {
+            auto w = d(gen);
+            auto it = std::lower_bound(ALL(weights), w);
+            result[i] = elems[it - weights.begin()];
+        }
+        return result;
     }
 }
 #endif /* INCLUDES_MATH_FUNCTIONS_H_ */

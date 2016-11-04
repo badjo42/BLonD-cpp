@@ -10,23 +10,24 @@
 #include <string>
 #include <blond/python.h>
 #include <iostream>
-// #include <blond/vector_math.h>
+#include <blond/vector_math.h>
 
 using namespace mymath;
 using namespace std;
 
-void matched_from_line_density(Beams *beam,
-                               FullRingAndRf *full_ring,
-                               map<string, string> line_density_opt,
-                               FullRingAndRf::main_harmonic_t main_harmonic_opt,
-                               TotalInducedVoltage *totVolt,
-                               string plot,
-                               string figdir,
-                               string half_option,
-                               map<string, f_vector_t> extraVoltageDict,
-                               int n_iterations_input,
-                               int seed
-                              )
+matched_from_line_denstity_return_t
+matched_from_line_density(Beams *beam,
+                          FullRingAndRf *full_ring,
+                          map<string, string> line_density_opt,
+                          FullRingAndRf::main_harmonic_t main_harmonic_opt,
+                          TotalInducedVoltage *totVolt,
+                          string plot,
+                          string figdir,
+                          string half_option,
+                          map<string, f_vector_t> extraVoltageDict,
+                          int n_iterations_input,
+                          int seed
+                         )
 {
     // NOTE seed random engine
     // not setting line_density_opt["exponent"] to null
@@ -61,8 +62,7 @@ void matched_from_line_density(Beams *beam,
                                          extra_voltage_input.size()
                                      );
         extra_potential_input.insert(extra_potential_input.begin(), 0);
-        for (auto &e : extra_potential_input)
-            e *= - eom_factor_potential;
+        extra_potential_input *= -eom_factor_potential;
         extra_potential = interp(time_coord_array, extra_voltage_time_input,
                                  extra_potential_input);
     }
@@ -86,11 +86,9 @@ void matched_from_line_density(Beams *beam,
                                              (time_coord_array.front()
                                               + time_coord_array.back()) / 2.,
                                              exponent);
-        auto min = *min_element(line_density.begin(), line_density.end());
-        for (auto &l : line_density) l -= min;
-        const auto sum = accumulate(line_density.begin(), line_density.end(), 0.);
-        for (auto &l : line_density) l = l / sum * beam->n_macroparticles;
-
+        line_density -= *min_element(ALL(line_density));
+        const double sum = accumulate(ALL(line_density), 0.);
+        line_density *= (beam->n_macroparticles / sum);
     } else { // (line_density_opt["type"] == "user_input") {
         time_line_den = util::string_to_double_vector(line_density_opt["time_line_den"]);
         n_points_line_den = time_line_den.size();
@@ -99,11 +97,9 @@ void matched_from_line_density(Beams *beam,
         line_density = util::string_to_double_vector(
                            line_density_opt["line_density"]);
 
-        auto min = *min_element(line_density.begin(), line_density.end());
-        for (auto &l : line_density) l -= min;
-        const auto sum = accumulate(line_density.begin(), line_density.end(), 0.);
-        for (auto &l : line_density) l = l / sum * beam->n_macroparticles;
-
+        line_density -= *min_element(ALL(line_density));
+        const double sum = accumulate(ALL(line_density), 0.);
+        line_density *= (beam->n_macroparticles / sum);
     }
 
     f_vector_t induced_potential_final, induced_potential, time_induced_voltage;
@@ -122,13 +118,7 @@ void matched_from_line_density(Beams *beam,
         // fit option is already normal
 
         auto induced_voltage_object = *totVolt;
-        // cout << "totVolt slices[0]: " << totVolt->fSlices->bin_centers[0] << "\n";
-        // cout << "object slices[0]: " << induced_voltage_object.fSlices->bin_centers[0] << "\n";
         induced_voltage_object.reprocess(&slices);
-
-        // cout << "totVolt slices[0]: " << totVolt->fSlices->bin_centers[0] << "\n";
-        // cout << "object slices[0]: " << induced_voltage_object.fSlices->bin_centers[0] << "\n";
-
         induced_voltage_length = 1.5 * n_points_line_den;
         auto induced_voltage = induced_voltage_object.induced_voltage_sum(
                                    beam, induced_voltage_length);
@@ -139,8 +129,7 @@ void matched_from_line_density(Beams *beam,
 
         induced_potential = cum_trapezoid(induced_voltage,
                                           time_induced_voltage[1] - time_induced_voltage[0]);
-        for (auto &v : induced_potential)
-            v *= - eom_factor_potential;
+        induced_potential *= -eom_factor_potential;
         induced_potential.insert(induced_potential.begin(), 0);
         n_iterations = n_iterations_input;
 
@@ -170,27 +159,8 @@ void matched_from_line_density(Beams *beam,
                 total_potential[j] += extra_potential[j];
         }
 
-        // cout << "total_potential.size(): " << total_potential.size() << "\n";
-
-        // cout << "total_potential: "
-        //      << accumulate(ALL(total_potential), 0.)
-        //      << "\n";
-
-        // cout << "time_coord_array sum: "
-        //      << accumulate(ALL(time_coord_array), 0.) << "\n";
-
         potential_well_cut(time_coord_array, total_potential,
                            time_coord_sep, potential_well_sep);
-        // time_coord_sep and potential_well_sep have been doubled in turn 2
-
-        // cout << "time_coord_sep size: " << time_coord_sep.size() << "\n";
-        // cout << "potential_well_sep size: " << potential_well_sep.size() << "\n";
-
-        // cout << "time_coord_sep sum: "
-        //      << accumulate(ALL(time_coord_sep), 0.) << "\n";
-
-        // cout << "potential_well_sep sum: "
-        //      << accumulate(ALL(potential_well_sep), 0.) << "\n";
 
         f_vector_t min_positions_potential, max_positions_potential;
         f_vector_t min_values_potential, max_values_potential;
@@ -248,15 +218,14 @@ void matched_from_line_density(Beams *beam,
         // NOTE what is happening here?
         // can max_profile_pos be more than one element?
         if (totVolt == nullptr) {
-            for (auto &v : time_line_den)
-                v -= max_profile_pos - min_potential_pos;
+            time_line_den -= (max_profile_pos - min_potential_pos);
             max_profile_pos = max_profile_pos -
                               (max_profile_pos - min_potential_pos);
         }
 
         if (i != n_iterations - 1) {
-            for (auto &v : time_line_den)
-                v -= max_profile_pos - min_potential_pos;
+            time_line_den -= (max_profile_pos - min_potential_pos);
+
             time_induced_voltage =
                 linspace(time_line_den[0], time_line_den[0]
                          + (induced_voltage_length - 1) * line_den_resolution,
@@ -330,21 +299,20 @@ void matched_from_line_density(Beams *beam,
         potential_half = interp(time_coord_half,
                                 time_coord_sep, potential_well_sep);
 
-        auto min_potential_half = *min_element(ALL(potential_half));
-        FOR(potential_half, it) *it -= min_potential_half;
+        potential_half -= *min_element(ALL(potential_half));
 
         f_vector_t line_den_diff;
         adjacent_difference(ALL(line_den_half), back_inserter(line_den_diff));
         line_den_diff.erase(line_den_diff.begin());
-        FOR(line_den_half, it) *it /= (time_coord_diff);
+
+        line_den_half /= time_coord_diff;
 
         auto time_line_den_diff = time_coord_half;
         time_line_den_diff.pop_back();
-        FOR(time_line_den_diff, it) *it += time_coord_diff / 2.;
+        time_line_den_diff += (time_coord_diff) / 2.;
 
         line_den_diff = interp(time_coord_half, time_line_den_diff,
                                line_den_diff, 0.0, 0.0);
-
 
         auto time_abel = linspace(time_coord_half[0],
                                   time_coord_half.back(),
@@ -402,7 +370,6 @@ void matched_from_line_density(Beams *beam,
             }
 
         }
-
         FOR(density_function, it) {
             if (std::isnan(*it) || std::isinf(*it) || *it < 0.)
                 *it = 0.;
@@ -449,8 +416,9 @@ void matched_from_line_density(Beams *beam,
 
 
     int n_points_grid = 1000;
-    auto grid_indexes = arange<double>(0., n_points_grid);
-    FOR(grid_indexes, it) *it = *it * time_line_den.size() / n_points_grid;
+    auto grid_indexes = arange<double>(0., n_points_grid)
+                        * (time_line_den.size() / n_points_grid);
+
     auto time_coord_indexes = arange<double>(0., time_line_den.size());
     auto time_coord_for_grid = interp(grid_indexes, time_coord_indexes,
                                       time_line_den);
@@ -458,8 +426,7 @@ void matched_from_line_density(Beams *beam,
     auto potential_well_for_grid = interp(time_coord_for_grid, time_coord_sep,
                                           potential_well_sep);
 
-    auto min_potential_well = *min_element(ALL(potential_well_for_grid));
-    FOR(potential_well_for_grid, it) *it -= min_potential_well;
+    potential_well_for_grid -= *min_element(ALL(potential_well_for_grid));
 
     f_vector_2d_t time_grid, deltaE_grid, potential_well_grid;
 
@@ -467,10 +434,91 @@ void matched_from_line_density(Beams *beam,
     meshgrid(potential_well_for_grid, potential_well_for_grid,
              potential_well_grid, potential_well_grid);
 
-    // continue from line 334 distribution.py
-    // requires some complex vector operations (matrix multiply)
-    // interp over an array
+    f_vector_2d_t hamiltonian_grid;
+    for (uint i = 0; i < deltaE_grid.size(); i++)
+        hamiltonian_grid.push_back(eom_factor_dE * deltaE_grid[i] * deltaE_grid[i] +
+                                   potential_well_grid[i]);
 
+    // we need to sort density_function with regards to hamiltonian_coord
+    // and then sort hamiltonian_coord as well
+    struct Comparator {
+        const double *a;
+        Comparator(const double *_a) : a(_a) {}
+        bool operator()(const int i1, const int i2) const
+        {
+            return a[i1] < a[i2];
+        }
+    };
+
+    sort(ALL(density_function), Comparator(hamiltonian_coord.data()));
+    sort(ALL(hamiltonian_coord));
+
+    f_vector_2d_t density_grid;
+
+    FOR(hamiltonian_grid, row) {
+        density_grid.push_back(interp(*row, hamiltonian_coord, density_function));
+    }
+
+    double grid_sum = 0.;
+    FOR(density_grid, it) {
+        f_vector_t &row = *it;
+        FOR(row, e) {
+            if (std::isnan(*e) || std::isinf(*e) || *e < 0.)
+                *e = 0.;
+        }
+        grid_sum += accumulate(ALL(row), 0.0);
+    }
+
+    FOR(density_grid, row) *row /= grid_sum;
+    f_vector_t reconstructed_line_den;
+    FOR(density_grid, row) reconstructed_line_den += *row;
+
+    // TODO insert plot here
+    // I need to pass time_line_den, line_density (all 1D)
+    // time_coord_for_grid, reconstructed_line_den (all 1D)
+    // plot, fign, figdir
+
+    // TODO I have to test random choice
+    int grid_size = 0;
+    f_vector_t density_grid_flat;
+
+    FOR(density_grid, row) grid_size += (*row).size();
+    auto indexes = random_choice(arange(0, grid_size, 1),
+                                 beam->n_macroparticles,
+                                 flatten(density_grid));
+
+    auto time_grid_flat = flatten(time_grid);
+    auto deltaE_grid_flat = flatten(deltaE_grid);
+    const double delta_time_coord = time_coord_for_grid[1] - time_coord_for_grid[0];
+    const double delta_deltaE = deltaE_for_grid[1] - deltaE_for_grid[0];
+
+    std::default_random_engine gen(seed);
+    std::uniform_real_distribution<double> d(0.0, 1.0);
+
+    for (int i = 0; i < beam->n_macroparticles; i++) {
+        beam->dt[i] = time_grid_flat[i] + (d(gen) - 0.5) * delta_time_coord;
+        beam->dE[i] = deltaE_grid_flat[i] + (d(gen) - 0.5) * delta_deltaE;
+    }
+
+    if (totVolt != nullptr) {
+        auto rfp = totVolt->fSlices->rfp;
+        auto slices = Slices(rfp, beam, time_coord_for_grid.size());
+        slices.n_macroparticles = reconstructed_line_den * beam->n_macroparticles;
+        slices.bin_centers = time_coord_for_grid;
+        slices.edges = linspace(slices.bin_centers[0]
+                                - (slices.bin_centers[1] - slices.bin_centers[0]) / 2,
+                                slices.bin_centers.back()
+                                + (slices.bin_centers[1] - slices.bin_centers[0]) / 2,
+                                slices.bin_centers.size() + 1);
+        // fit option is already normal
+
+        auto induced_voltage_object = *totVolt;
+        induced_voltage_object.reprocess(&slices);
+        induced_voltage_object.induced_voltage_sum(beam);
+        // FIXME return induced_voltage_object
+    }
+    return {hamiltonian_coord, density_function,
+            time_line_den, line_density};
 }
 
 
